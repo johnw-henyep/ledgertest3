@@ -1,0 +1,9 @@
+[targets]
+target		ansible_host=__TARGET_IP__
+
+[targets:vars]
+sync_src=/drone/src
+sync_dst=__SYNC_DST__
+file_user=__FILE_USER__
+file_group=__FILE_GROUP__
+

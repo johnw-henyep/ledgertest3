@@ -1,0 +1,56 @@
+---
+- hosts: targets
+  tasks:
+    - name: copy files to the dest folder
+      tags: [ always ]
+      synchronize:
+        src: "{{ sync_src }}/"
+        dest: "{{ sync_dst }}/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=/.drone*"
+          - "--exclude=/.git*"
+          - "--exclude=/logs/"
+          - "--exclude=/logs/*"
+          - "--exclude=/vendor/"
+          - "--exclude=/vendor*"
+
+    - name: set perms read-only on the dest folders
+      tags: [ always ]
+      file:
+        path:  "{{ sync_dst }}"
+        owner: "{{ file_user  }}"
+        group: "{{ file_group }}"
+        #mode: u=rwX,g=rX,o=
+        mode: 0755
+        state: directory
+        recurse: yes
+
+    - name: set perms read-only on the dest files
+      tags: [ always ]
+      shell: |
+        chown root "{{ sync_dst }}"
+        find {{ sync_dst }}/ -type d -exec chmod 0755 {} \;
+        find {{ sync_dst }}/ -type f -exec chmod 0644 {} \;
+
+    - name: set perms execute on command cake
+      tags: [ always ]
+      file:
+        path: "{{ sync_dst }}/{{ item }}"
+        mode: 0755
+      loop:
+        - bin/cake
+
+    - name: set perms read-write on the certain folders
+      tags: [ always ]
+      file:
+        path: "{{ sync_dst }}/{{ item }}"
+        owner: root
+        group: "{{ file_group }}"
+        state: directory
+        mode: 01777
+        recurse: yes
+      loop:
+        - tmp/
+        - logs/
+
